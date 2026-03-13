@@ -1,0 +1,28 @@
+services:
+  # Serviço da sua aplicação
+  api:
+    # . indica que é para usar o Dockerfile
+    build: 
+      context: .
+      args:
+        - NODE_VERSION=${NODE_VERSION}
+    ports:
+      # Expoe a porta HOST:EXT
+      - "3000:3000"
+    environment:
+      # A mágica está aqui: 'db' é o nome do serviço abaixo
+      - DB_HOST=db
+      - DB_PASSWORD=minhasenha
+    depends_on:
+      - db
+
+  # Serviço do Banco de Dados
+  db:
+    image: postgres:15-alpine:${TAG_VERSAO}
+    environment:
+      - POSTGRES_PASSWORD=minhasenha
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

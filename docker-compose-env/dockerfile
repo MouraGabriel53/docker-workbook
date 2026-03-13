@@ -1,0 +1,2 @@
+ARG NODE_VERSION=18 # Valor padrão caso nada seja passado
+FROM node:${NODE_VERSION}-alpine

@@ -1,0 +1,60 @@
+  services:
+    api:
+        build: .
+        depends_on:
+          db:
+            condition: service_healthy # Só inicia a API se o 'db' passar no healthcheck
+        deploy: 
+          resources:
+            limits:
+              cpus: '0.50' # 50% de um núcleo
+              memory: 1G # Limite de RAM
+            reservations: # Limite de memória
+              memory: 500M
+        networks:
+          - public  # Acesso externo
+          - private # Acesso ao banco
+        # ... (outras configs)
+                
+    db:
+      image: postgres:15-alpine
+      # 1. Indicamos que este serviço tem acesso ao segredo
+      secrets:
+        - db_password
+      environment:
+        # 2. O Postgres tem uma convenção: se a variável termina em _FILE, 
+        # ele procura o valor dentro do caminho especificado.
+        - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      # Aguarda o banco subir para a API não travar ao tentar se conectar (mesmo que o banco suba antes, depends on, ele demora uns minutos para entrar em run)
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 10s   # Quanto em quanto tempo ele testa
+        timeout: 5s    # Quanto tempo ele espera a resposta
+        retries: 5     # Quantas vezes ele tenta antes de marcar como "unhealthy"
+        start_period: 10s # Tempo de carência inicial para o banco "acordar"
+      # -------------------------------
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      deploy: 
+        resources:
+          limits:
+            cpus: '0.50' # 50% de um núcleo
+            memory: 1G # Limite
+          reservations: # Garantia do Docker
+            memory: 500M
+        networks:
+          - private # O banco está isolado, ninguém "da rua" fala com ele
+        # ... (outras configs)
+
+  # 3. Definimos a origem do segredo a nível global
+  secrets:
+    db_password:
+      file: ./db_password.txt
+
+  volumes:
+    postgres_data:
+
+  networks:
+    public:  # Driver bridge padrão
+    private: 
+      internal: true # Bloqueia qualquer saída/entrada externa nesta rede

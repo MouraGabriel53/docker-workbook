@@ -1,0 +1,84 @@
+// CONSTRUIR O CONTAINER
+
+docker build -t nome_da_sua_imagem:tag .
+
+docker build -t backend_api:latest .
+
+// VERIFICAR CONTAINERES
+
+docker images
+
+// RODAR UM CONATINER
+
+docker run -p 8080:8080 backend_api:latest // -p PERMITE MAPEAR (EXPECIFICAR) UMA PORTA
+
+docker run -e foo=bar postgres env // -e PASSA ENV PARA O CONTAINER
+
+docker run -e POSTGRES_PASSWORD=secret --memory="512m" --cpus="0.5" postgres // --memory e --cpus LIMITAR RECURSOS
+
+// GERENCIAMENTO DO CONTAINER
+
+docker stop $(docker ps -q --filter ancestor=minha_app_node:latest) // PARA O CONTAINER
+
+docker rm $(docker ps -aq --filter ancestor=minha_app_node:latest) // REMOVE O CONTAINER
+
+docker compose logs -f <nome_do_servico> // VERIFICAR LOGS DO SERVIÇO
+
+=====================================================================================================================================
+
+Cheat Sheet: Docker para DevOps (Gabriel Moura)
+🏗️ 1. Dockerfile Pro (Multistage & Cache)
+FROM <imagem>:<tag>: Define a imagem base (ex: node:18-alpine).
+
+WORKDIR /app: Define o diretório de trabalho.
+
+COPY package*.json ./: Copia apenas dependências para aproveitar o cache.
+
+RUN npm install: Instala as dependências.
+
+COPY . .: Copia o restante do código.
+
+AS <nome>: Nomeia um estágio no Multistage Build.
+
+COPY --from=<nome>: Copia arquivos de um estágio anterior para a imagem final leve.
+
+🐙 2. Docker Compose (Orquestração & Infra)
+services:: Define os containers (ex: api, db).
+
+build: .: Indica para construir a imagem a partir do diretório atual.
+
+depends_on:: Define ordem de inicialização.
+
+healthcheck:: Verifica se o serviço está pronto (ex: pg_isready).
+
+secrets:: Injeta arquivos sensíveis de forma segura.
+
+networks:: Isola o tráfego entre serviços (ex: public vs private).
+
+deploy.resources:: Limita CPU e Memória RAM.
+
+💾 3. Persistência & Volumes
+volumes::
+
+Nomeado (postgres_data:/var/lib/...): Para dados persistentes.
+
+Bind Mount (./init:/docker-entrypoint-initdb.d): Para injetar scripts SQL iniciais.
+
+🛠️ 4. Comandos de Terminal Essenciais
+Gerenciamento Geral
+docker ps: Lista containers ativos.
+
+docker exec -it <id> sh: Acessa o terminal do container.
+
+docker stats: Monitora consumo de CPU/RAM em tempo real.
+
+docker system prune: Limpa lixo do Docker.
+
+Comandos do Compose
+docker compose up -d: Sobe o ambiente em segundo plano.
+
+docker compose logs -f <serviço>: Segue os logs em tempo real (essencial para debug).
+
+docker compose down -v: Remove tudo, incluindo os volumes de dados.
+
+docker compose build --no-cache: Força reconstrução total ignorando o cache.
